@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class ClientHandler {
     Server server;
@@ -23,6 +24,7 @@ public class ClientHandler {
 
             new Thread(() -> {
                 try {
+                    socket.setSoTimeout(120000);
                     //цикл аутентификации
                     while (true) {
                         String str = in.readUTF();
@@ -41,6 +43,7 @@ public class ClientHandler {
                                 login = token[1];
                                 server.subscribe(this);
                                 System.out.printf("Клиент %s подключился \n", nick);
+                                socket.setSoTimeout(0);
                                 break;
                             } else {
                                 sendMsg("Неверный логин / пароль");
@@ -71,7 +74,9 @@ public class ClientHandler {
 
 
                     }
-                } catch (IOException e) {
+                } catch (SocketTimeoutException e){
+                    sendMsg("Вы были отключены. Перезапустите чат");
+                }catch (IOException e) {
                     e.printStackTrace();
                 } finally {
                     System.out.println("Клиент отключился");
